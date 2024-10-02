@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres-db-container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: hz_task_list
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - task-list-network
+    restart: unless-stopped
+
+networks:
+  task-list-network:
+    driver: bridge
