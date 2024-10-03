@@ -1,19 +1,8 @@
 package com.herc.test.hztasklist.model.db
 
-import jakarta.persistence.CascadeType
-import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
-import jakarta.persistence.ManyToMany
-import jakarta.persistence.OneToOne
-import jakarta.persistence.Table
-import jakarta.persistence.UniqueConstraint
-import jakarta.validation.constraints.NotBlank
+import jakarta.persistence.*
 import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 
 @Entity
@@ -27,10 +16,10 @@ class User(
     @field:NotBlank
     @field:Size(max = 50)
     @field:Email
-    val email: String,
+    val email: String = "",
 
     @field:NotBlank
-    var password: String,
+    var password: String = "",
 
     var fcmToken: String? = null,
 
@@ -44,8 +33,18 @@ class User(
         joinColumns = [JoinColumn(name = "user_id")],
         inverseJoinColumns = [JoinColumn(name = "role_id")]
     )
-    var roles: Set<Role> = HashSet()
-) {
+    var roles: Set<Role> = HashSet(),
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "user_tasks",
+        joinColumns = [JoinColumn(name = "user_id")],
+        inverseJoinColumns = [JoinColumn(name = "task_id")]
+    )
+    var tasks: List<Task> = ArrayList()
+)
+
+{
     fun requiredId(): Long {
         return id ?: throw IllegalStateException("Id is null")
     }

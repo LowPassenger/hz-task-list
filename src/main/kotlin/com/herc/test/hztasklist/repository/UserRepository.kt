@@ -1,5 +1,6 @@
 package com.herc.test.hztasklist.repository
 
+import com.herc.test.hztasklist.model.db.RefreshToken
 import com.herc.test.hztasklist.model.db.User
 import org.springframework.data.jpa.repository.JpaRepository
 
