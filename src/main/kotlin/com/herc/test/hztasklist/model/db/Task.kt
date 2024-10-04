@@ -9,8 +9,8 @@ class Task(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     var title: String? = null,
-    val timeStamp: Long = 0,
-    val expiredTime: Long = 0,
+    var timeStamp: Long = 0,
+    var expiredTime: Long = 0,
     var isComplete: Boolean = false,
 
     @Enumerated(EnumType.STRING)

@@ -8,5 +8,5 @@ class RefreshToken(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     @Column(nullable = false, unique = true)
-    val token: String? = null
+    var token: String? = null
 )

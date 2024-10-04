@@ -10,7 +10,7 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "roles")
-data class Role(
+class Role(
     @Id
     var id: Long? = null,
 

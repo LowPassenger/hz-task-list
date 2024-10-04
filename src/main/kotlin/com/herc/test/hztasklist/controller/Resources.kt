@@ -20,10 +20,13 @@ object Resources {
     }
 
     object Static {
-
         object OpenApi {
             const val ROOT_PATH = "/swagger-ui"
             const val DOCS_PATH = "/v3/api-docs"
+        }
+
+        object Admin {
+            const val LOGIN = "admin/login"
         }
     }
 }

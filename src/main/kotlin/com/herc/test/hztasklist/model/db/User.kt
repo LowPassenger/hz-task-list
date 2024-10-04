@@ -16,7 +16,7 @@ class User(
     @field:NotBlank
     @field:Size(max = 50)
     @field:Email
-    val email: String = "",
+    var email: String = "",
 
     @field:NotBlank
     var password: String = "",
