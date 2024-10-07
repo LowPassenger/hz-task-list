@@ -1,10 +1,10 @@
-package com.herc.test.hztasklist.model.db
+package com.herc.test.hztasklist.model.entity
 
 import com.herc.test.hztasklist.model.EPriority
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "tasks", indexes = [Index(columnList = "timestamp")])
+@Table(name = "tasks", indexes = [Index(columnList = "expiredTime")])
 class Task(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,

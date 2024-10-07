@@ -1,6 +1,6 @@
 package com.herc.test.hztasklist.security.services
 
-import com.herc.test.hztasklist.model.db.User
+import com.herc.test.hztasklist.model.entity.User
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails

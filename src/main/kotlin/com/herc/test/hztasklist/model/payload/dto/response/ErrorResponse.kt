@@ -1,4 +1,4 @@
-package com.herc.test.hztasklist.payload.response
+package com.herc.test.hztasklist.model.payload.dto.response
 
 class ErrorResponse(val error: Error, val msg: String? = null)
 

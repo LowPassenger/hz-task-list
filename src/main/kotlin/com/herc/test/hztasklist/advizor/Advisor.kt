@@ -1,9 +1,11 @@
 package com.herc.test.hztasklist.advizor;
 
-import com.herc.test.hztasklist.payload.response.Error
-import com.herc.test.hztasklist.payload.response.ErrorResponse
+import com.herc.test.hztasklist.advizor.exceptions.UserWithEmailExistException
+import com.herc.test.hztasklist.model.payload.dto.response.Error
+import com.herc.test.hztasklist.model.payload.dto.response.ErrorResponse
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -22,9 +24,9 @@ public class Advisor {
 
         return ResponseEntity.badRequest().body(ErrorResponse(Error.BAD_REQUEST, errors))
 }
-    @ExceptionHandler(EmailExistException::class)
+    @ExceptionHandler(UserWithEmailExistException::class)
     @ResponseBody
-    fun handleEmailExistException(e: NickNameExistException): ResponseEntity<*> {
+    fun handleEmailExistException(e: UserWithEmailExistException): ResponseEntity<*> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse(Error.EMAIL_EXIST, e.message))
     }
 }

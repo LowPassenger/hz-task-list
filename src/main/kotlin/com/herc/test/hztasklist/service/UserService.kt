@@ -1,6 +1,6 @@
 package com.herc.test.hztasklist.service
 
-import com.herc.test.hztasklist.model.db.User
+import com.herc.test.hztasklist.model.entity.User
 import com.herc.test.hztasklist.repository.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service

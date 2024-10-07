@@ -1,4 +1,4 @@
-package com.herc.test.hztasklist.model.db
+package com.herc.test.hztasklist.model.entity
 
 import com.herc.test.hztasklist.model.ERole
 import jakarta.persistence.Column
