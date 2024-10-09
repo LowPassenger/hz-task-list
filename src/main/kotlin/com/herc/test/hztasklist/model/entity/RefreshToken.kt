@@ -4,9 +4,10 @@ import jakarta.persistence.*
 
 @Entity(name = "refreshtoken")
 class RefreshToken(
+    @Column(nullable = false, unique = true)
+    var token: String? = null,
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
-    @Column(nullable = false, unique = true)
-    var token: String? = null
+    var id: Long? = null
 )

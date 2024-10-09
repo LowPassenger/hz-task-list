@@ -1,7 +1,6 @@
-package com.herc.test.hztasklist.controller.user
+package com.herc.test.hztasklist.controller
 
-import com.herc.test.hztasklist.controller.Resources
-import com.herc.test.hztasklist.controller.utils.ControllerUtils.getUserEmailFromCurrentContext
+import com.herc.test.hztasklist.controller.ControllerUtils
 import com.herc.test.hztasklist.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
@@ -26,6 +25,6 @@ class UserController {
 
     @PostMapping(Resources.UserApi.FCM_TOKEN)
     fun saveFcmToken(@RequestParam token: String): ResponseEntity<*> {
-        return ResponseEntity.ok(userService.saveFcmToken(getUserEmailFromCurrentContext(), token))
+        return ResponseEntity.ok(userService.saveFcmToken(ControllerUtils.getUserEmailFromCurrentContext(), token))
     }
 }

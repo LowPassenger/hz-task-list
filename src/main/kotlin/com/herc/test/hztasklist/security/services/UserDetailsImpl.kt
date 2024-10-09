@@ -1,11 +1,11 @@
 package com.herc.test.hztasklist.security.services
 
-import com.herc.test.hztasklist.model.entity.User
+import com.herc.test.hztasklist.model.entity.Task
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
-class UserDetailsImpl(user: User) : UserDetails{
+class UserDetailsImpl(user: Task) : UserDetails{
     var id: Long? = null
     val email: String
 

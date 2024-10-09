@@ -14,9 +14,9 @@ class UserDetailsServiceImpl : UserDetailsService {
     lateinit var userRepository: UserRepository
 
     @Transactional
-    override fun loadUserByUsername(username: String): UserDetails {
-        val user = userRepository.findByEmail(username)
-            ?: throw UsernameNotFoundException("User Not Found with username: $username")
+    override fun loadUserByUsername(email: String): UserDetails {
+        val user = userRepository.findByEmail(email)
+            ?: throw UsernameNotFoundException("User Not Found with username: $email")
         return UserDetailsImpl(user)
     }
 }

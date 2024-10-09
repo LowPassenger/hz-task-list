@@ -1,20 +1,20 @@
-package com.herc.test.hztasklist.controller.admin
+package com.herc.test.hztasklist.controller
 
-import com.herc.test.hztasklist.controller.Resources
+import com.herc.test.hztasklist.model.payload.dto.request.AuthenticationRequestDto
 import com.herc.test.hztasklist.repository.UserRepository
 import com.herc.test.hztasklist.security.jwt.JwtUtils
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
-import jakarta.servlet.http.HttpServletRequest
 
 @Controller
 @RequestMapping(Resources.AdminApi.ROOT)
@@ -32,16 +32,21 @@ class AdminController {
 
     @PostMapping(Resources.AdminApi.LOGIN)
     fun login(
-        @Valid @ModelAttribute adminViewParams: AdminViewParams,
+        @Valid @ModelAttribute authenticationRequestDto : AuthenticationRequestDto,
         request: HttpServletRequest
     ): String {
         val authentication: Authentication = authenticationManager
-            .authenticate(UsernamePasswordAuthenticationToken(adminViewParams.email, adminViewParams.password))
+            .authenticate(
+                UsernamePasswordAuthenticationToken(
+                    authenticationRequestDto.email,
+                    authenticationRequestDto.password
+                )
+            )
 
         SecurityContextHolder.getContext().authentication = authentication
-        jwtUtils.generateAndIncludeJwtForSession(request, adminViewParams.email)
+        jwtUtils.generateAndIncludeJwtForSession(request, authenticationRequestDto.email)
 
-        logger.info("Admin ${adminViewParams.email} log to AdminAPI")
-        return "redirect:${Resources.AdminApi.ROOT}${Resources.AdminApi.PHOTOS_TO_APPROVE}"
+        logger.info("Admin ${authenticationRequestDto.email} log to AdminAPI")
+        return "redirect:${Resources.AdminApi.ROOT}"
     }
 }

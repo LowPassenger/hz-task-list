@@ -10,9 +10,6 @@ import jakarta.validation.constraints.Size
     name = "users",
     uniqueConstraints = [UniqueConstraint(columnNames = ["email"])])
 class User(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
-
     @field:NotBlank
     @field:Size(max = 50)
     @field:Email
@@ -21,7 +18,7 @@ class User(
     @field:NotBlank
     var password: String = "",
 
-    var fcmToken: String? = null,
+    var token: String? = null,
 
     @OneToOne(cascade = [CascadeType.REMOVE], fetch = FetchType.LAZY)
     @JoinColumn(name = "refresh_token_id")
@@ -41,11 +38,9 @@ class User(
         joinColumns = [JoinColumn(name = "user_id")],
         inverseJoinColumns = [JoinColumn(name = "task_id")]
     )
-    var tasks: List<Task> = ArrayList()
-)
+    var tasks: List<Task> = ArrayList(),
 
-{
-    fun requiredId(): Long {
-        return id ?: throw IllegalStateException("Id is null")
-    }
-}
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
+)

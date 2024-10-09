@@ -5,7 +5,8 @@ import com.herc.test.hztasklist.model.payload.dto.RefreshTokenDto
 import com.herc.test.hztasklist.service.mapper.MapperToDto
 import com.herc.test.hztasklist.service.mapper.MapperToModel
 
-class RefreshTokenMapper : MapperToDto<RefreshTokenDto, RefreshToken>, MapperToModel<RefreshToken, RefreshTokenDto> {
+class RefreshTokenMapper : MapperToDto<RefreshTokenDto, RefreshToken>,
+    MapperToModel<RefreshToken, RefreshTokenDto> {
 
     override fun toDto(entity: RefreshToken): RefreshTokenDto {
         return RefreshTokenDto(

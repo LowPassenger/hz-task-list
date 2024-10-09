@@ -1,5 +1,6 @@
 package com.herc.test.hztasklist.advizor;
 
+import com.herc.test.hztasklist.advizor.exceptions.ParameterNotFoundException
 import com.herc.test.hztasklist.advizor.exceptions.UserWithEmailExistException
 import com.herc.test.hztasklist.model.payload.dto.response.Error
 import com.herc.test.hztasklist.model.payload.dto.response.ErrorResponse
@@ -28,5 +29,12 @@ public class Advisor {
     @ResponseBody
     fun handleEmailExistException(e: UserWithEmailExistException): ResponseEntity<*> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse(Error.EMAIL_EXIST, e.message))
+    }
+
+    @ExceptionHandler(ParameterNotFoundException::class)
+    @ResponseBody
+    fun handleParameterNotFoundException(e: ParameterNotFoundException): ResponseEntity<*> {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ErrorResponse(Error.INTERNAL_SERVER_ERROR, e.message))
     }
 }
