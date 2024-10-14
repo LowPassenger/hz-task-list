@@ -2,7 +2,7 @@ package com.herc.test.hztasklist.model.entity
 
 import jakarta.persistence.*
 
-@Entity(name = "refreshtoken")
+@Entity(name = "refresh_token")
 class RefreshToken(
     @Column(nullable = false, unique = true)
     var token: String? = null,

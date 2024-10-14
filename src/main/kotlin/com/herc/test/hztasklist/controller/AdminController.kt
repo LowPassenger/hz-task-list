@@ -1,52 +1,128 @@
 package com.herc.test.hztasklist.controller
 
-import com.herc.test.hztasklist.model.payload.dto.request.AuthenticationRequestDto
-import com.herc.test.hztasklist.repository.UserRepository
-import com.herc.test.hztasklist.security.jwt.JwtUtils
-import jakarta.servlet.http.HttpServletRequest
+import com.herc.test.hztasklist.model.payload.dto.request.AdminChangeTaskRequestDto
+import com.herc.test.hztasklist.service.AdminService
+import com.herc.test.hztasklist.service.TaskService
+import com.herc.test.hztasklist.service.UserService
+import com.herc.test.hztasklist.service.mapper.impl.AuthenticationResponseDtoMapper
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.Authentication
-import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.core.io.ByteArrayResource
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.ModelAttribute
-import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 
 @Controller
 @RequestMapping(Resources.AdminApi.ROOT)
+@Tag(name = "Admin Controller", description = "Task API")
+@PreAuthorize("hasRole('ROLE_ADMIN')")
 class AdminController {
     private val logger = LoggerFactory.getLogger(AdminController::class.java)
 
     @Autowired
-    lateinit var jwtUtils: JwtUtils
+    lateinit var userService: UserService
 
     @Autowired
-    lateinit var authenticationManager: AuthenticationManager
+    lateinit var taskService: TaskService
 
     @Autowired
-    lateinit var userRepository: UserRepository
+    lateinit var adminService: AdminService
 
-    @PostMapping(Resources.AdminApi.LOGIN)
-    fun login(
-        @Valid @ModelAttribute authenticationRequestDto : AuthenticationRequestDto,
-        request: HttpServletRequest
-    ): String {
-        val authentication: Authentication = authenticationManager
-            .authenticate(
-                UsernamePasswordAuthenticationToken(
-                    authenticationRequestDto.email,
-                    authenticationRequestDto.password
-                )
-            )
+    @Autowired
+    lateinit var mapper: AuthenticationResponseDtoMapper
 
-        SecurityContextHolder.getContext().authentication = authentication
-        jwtUtils.generateAndIncludeJwtForSession(request, authenticationRequestDto.email)
+    @GetMapping(value = [Resources.AdminApi.ALL_USERS_LIST])
+    @Operation(summary = "Return list of all User")
+    fun getAllUsers() : ResponseEntity<*> {
+        return ResponseEntity.ok().body(userService.getAll())
+    }
 
-        logger.info("Admin ${authenticationRequestDto.email} log to AdminAPI")
-        return "redirect:${Resources.AdminApi.ROOT}"
+    @GetMapping(value = [Resources.AdminApi.ALL_USER_TASKS])
+    @Operation(summary = "Return list of all Tasks for User with chosen id")
+    fun getUserTasksList(@RequestParam("id") id: Long) : ResponseEntity<*> {
+        return ResponseEntity.ok().body(adminService.getTasksListForUser(id))
+    }
+
+    @GetMapping(value = [Resources.AdminApi.DELETE_USER])
+    @Operation(summary = "Delete User with chosen id")
+    fun deleteUser(@RequestParam("id") id: Long) : ResponseEntity<*> {
+        if (adminService.deleteUser(id)) {
+            logger.info("User with id $id was deleted")
+            return ResponseEntity.ok().body("User with id $id successfully deleted")
+        }
+        else {
+            logger.error("User with id $id wasn't deleted. Wrong id?")
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("An error occurred while deleting user with id $id")
+        }
+    }
+
+    @GetMapping(value = [Resources.AdminApi.GIVE_TO_USER_ROLE_ADMIN])
+    @Operation(summary = "Set Admin status to User with chosen id ")
+    fun getUserStatusAdmin(@RequestParam("id") id: Long) : ResponseEntity<*> {
+        return if (adminService.setUserAdminStatus(id))
+            ResponseEntity.ok().body("User with id $id now has Admin status")
+        else
+            ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+                .body("User with id $id already has an Admin status")
+    }
+
+    @GetMapping(value = [Resources.AdminApi.REMOVE_FROM_USER_ROLE_ADMIN])
+    @Operation(summary = "Remove Admin status from User with chosen id ")
+    fun removeUserStatusAdmin(@RequestParam("id") id: Long) : ResponseEntity<*> {
+        return if (adminService.deleteUserAdminStatus(id))
+            ResponseEntity.ok().body("User with id $id now has no Admin status")
+        else
+            ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+                .body("User with id $id never has an Admin status")
+    }
+
+    @DeleteMapping(value = [Resources.AdminApi.DELETE_TASK])
+    @Operation(summary = "Delete Task with chosen id ")
+    fun deleteTask(@RequestParam("id") taskId: Long) : ResponseEntity<*> {
+        if (adminService.deleteTask(taskId)) {
+            logger.info("Task with id $taskId was deleted")
+            return ResponseEntity.ok().body("Task with id $taskId was successfully deleted")
+        }
+        else {
+            logger.error("Task with id $taskId wasn't deleted. Wrong id?")
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Task with id $taskId wasn't deleted")
+        }
+    }
+
+    @PutMapping(value = [Resources.AdminApi.EDIT_TASK])
+    @Operation(summary = "Update chosen Task")
+    fun updateTask(@RequestParam("id") id: Long,
+                   @Valid @RequestBody taskRequest: AdminChangeTaskRequestDto)
+    : ResponseEntity<*> {
+        return ResponseEntity.ok().body(adminService.updateTask(id, taskRequest))
+    }
+
+    @GetMapping(value = [Resources.AdminApi.ADMIN_TASK_STATISTIC])
+    @Operation(summary = "Show all completed and uncompleted tasks quantity")
+    fun tasksStatistic() : ResponseEntity<*> {
+        return ResponseEntity.ok().body(adminService.tasksStatistic())
+    }
+
+    @GetMapping(value = [Resources.AdminApi.ADMIN_USER_STATISTIC])
+    @Operation(summary = "Show current tasks quantity for every user")
+    fun usersStatistic() : ResponseEntity<*> {
+        return ResponseEntity.ok().body(adminService.usersStatistic())
+    }
+
+    @GetMapping(value = [Resources.AdminApi.TASKS_FILE_REPORT])
+    @Operation(summary = "Return file report.csv contains statistic for all users")
+    fun generateCsvReport(): ResponseEntity<ByteArrayResource> {
+        return adminService.generateReportFile()
     }
 }

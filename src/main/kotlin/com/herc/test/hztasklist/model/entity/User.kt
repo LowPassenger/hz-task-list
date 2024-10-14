@@ -32,7 +32,7 @@ class User(
     )
     var roles: Set<Role> = HashSet(),
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REMOVE])
     @JoinTable(
         name = "user_tasks",
         joinColumns = [JoinColumn(name = "user_id")],

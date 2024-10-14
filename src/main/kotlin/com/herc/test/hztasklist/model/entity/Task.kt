@@ -21,7 +21,7 @@ class Task(
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
-    val taskPriority: EPriority = EPriority.NORMAL,
+    var taskPriority: EPriority = EPriority.NORMAL,
 
     @OneToOne
     @JoinColumn(name = "user_id")

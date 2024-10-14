@@ -29,7 +29,7 @@ class AuthEntryPointJwt: AuthenticationEntryPoint {
         body["status"] = HttpServletResponse.SC_UNAUTHORIZED
         body["error"] = "Unauthorized"
         if (request.servletPath.contains(Resources.AdminApi.ROOT)) {
-            body["login_path"] = "${Resources.AdminApi.ROOT}${Resources.AdminApi.LOGIN}"
+            body["login_path"] = Resources.AdminApi.ROOT
         }
         body["message"] = authException.message
         body["timestamp"] = System.currentTimeMillis()

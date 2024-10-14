@@ -1,11 +1,11 @@
 package com.herc.test.hztasklist.model.payload.dto.response
 
-import com.herc.test.hztasklist.model.payload.dto.RoleDto
+import com.herc.test.hztasklist.model.entity.Role
 
 data class UserResponseDto(
     val id: Long?,
     val email: String,
     val token: String?,
-    val roles: Set<RoleDto>,
+    val roles: Set<Role>,
     val tasks: List<TaskResponseDto>
 )

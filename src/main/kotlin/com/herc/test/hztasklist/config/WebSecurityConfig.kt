@@ -1,78 +1,86 @@
 package com.herc.test.hztasklist.config
 
-import org.springframework.beans.factory.annotation.Autowired
+import com.herc.test.hztasklist.controller.Resources
+import com.herc.test.hztasklist.model.ERole
+import com.herc.test.hztasklist.security.jwt.AuthEntryPointJwt
+import com.herc.test.hztasklist.security.jwt.AuthTokenFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.env.Environment
 import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-class WebSecurityConfig : WebSecurityConfigurerAdapter() {
-    @Autowired
-    lateinit var userDetailsService: UserDetailsServiceImpl
-
-
-    @Autowired
-    private lateinit var unauthorizedHandler: AuthEntryPointJwt
-
-    @Autowired
-    private lateinit var environment: Environment
+class WebSecurityConfig(
+    private val unauthorizedHandler: AuthEntryPointJwt,
+    private val authTokenFilter: AuthTokenFilter
+) {
 
     @Bean
-    fun authenticationJwtTokenFilter(): AuthTokenFilter {
-        return AuthTokenFilter()
-    }
-
-    @Bean
-    fun passwordEncoder(): PasswordEncoder? {
+    fun passwordEncoder(): PasswordEncoder {
         return BCryptPasswordEncoder()
     }
 
-    @Throws(Exception::class)
-    override fun configure(authenticationManagerBuilder: AuthenticationManagerBuilder) {
-        authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder())
+    @Bean
+    fun authenticationManager(authenticationConfiguration: AuthenticationConfiguration): AuthenticationManager {
+        return authenticationConfiguration.authenticationManager
     }
 
     @Bean
-    @Throws(java.lang.Exception::class)
-    override fun authenticationManagerBean(): AuthenticationManager? {
-        return super.authenticationManagerBean()
+    @Throws(Exception::class)
+    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+        val csrfHandler = CsrfTokenRequestAttributeHandler()
+        csrfHandler.setCsrfRequestAttributeName("_csrf")
+
+        http
+            .csrf { csrf -> csrf.disable() }
+            .cors {cors -> cors.disable()}
+            .sessionManagement { session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            }
+            .exceptionHandling { handling ->
+                handling.authenticationEntryPoint(unauthorizedHandler)
+            }
+            .authorizeHttpRequests { requests ->
+                requests
+                    .requestMatchers(
+                        AntPathRequestMatcher("/swagger-ui.html"),
+                        AntPathRequestMatcher("/swagger-ui/**"),
+                        AntPathRequestMatcher("/v3/api-docs/**"),
+                        AntPathRequestMatcher("/swagger-resources/**"),
+                        AntPathRequestMatcher("/webjars/**"),
+                        AntPathRequestMatcher("/v3/api-docs.yaml"),
+                        AntPathRequestMatcher("/error")
+                    ).permitAll()
+                    .requestMatchers(AntPathRequestMatcher("${Resources.AuthApi.ROOT}/**"))
+                    .permitAll()
+                    .requestMatchers(AntPathRequestMatcher("${Resources.AdminApi.ROOT}/**"))
+                    .hasRole(ERole.ROLE_ADMIN.withoutPrefix())
+                    .anyRequest().authenticated()
+            }
+
+        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter::class.java)
+
+        return http.build()
     }
 
-    override fun configure(http: HttpSecurity) {
-
-        val configure = http.cors().disable().csrf()
-            .disable()
-            .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-            .authorizeRequests().antMatchers("${Resources.AuthApi.ROOT}/**").permitAll()
-            .antMatchers("${Resources.TestApi.ROOT}/**").permitAll()
-            .antMatchers("${Resources.PasswordApi.ROOT}/**").permitAll()
-            .antMatchers("${Resources.AdminApi.ROOT}${Resources.AdminApi.LOGIN}").permitAll()
-            .antMatchers("/favicon.ico").permitAll()
-            .antMatchers("${Resources.AdminApi.ROOT}/**").hasRole(ERole.ROLE_ADMIN.withoutPrefix())
-
-        if (environment.activeProfiles.contains(DEV_PROFILE)) {
-            configure
-                .antMatchers("${Resources.Static.OpenApi.ROOT_PATH}/*").permitAll()
-                .antMatchers("${Resources.Static.OpenApi.DOCS_PATH}/*").permitAll()
-                .antMatchers(Resources.Static.OpenApi.DOCS_PATH).permitAll()
-                .antMatchers("/${Resources.Static.Photo.FOLDER}/**").permitAll()
-        }
-
-        configure.anyRequest().authenticated()
-
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter::class.java)
-
+    @Bean
+    fun webSecurityCustomizer(): (HttpSecurity) -> Unit = { http ->
+        http.securityMatcher(AntPathRequestMatcher("/resources/**"))
+            .authorizeHttpRequests { requests ->
+                requests
+                    .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
+            }
     }
 }

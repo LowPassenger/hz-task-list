@@ -4,7 +4,9 @@ import com.herc.test.hztasklist.model.entity.RefreshToken
 import com.herc.test.hztasklist.model.payload.dto.RefreshTokenDto
 import com.herc.test.hztasklist.service.mapper.MapperToDto
 import com.herc.test.hztasklist.service.mapper.MapperToModel
+import org.springframework.stereotype.Component
 
+@Component
 class RefreshTokenMapper : MapperToDto<RefreshTokenDto, RefreshToken>,
     MapperToModel<RefreshToken, RefreshTokenDto> {
 

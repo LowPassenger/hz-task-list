@@ -7,18 +7,19 @@ import com.herc.test.hztasklist.model.payload.dto.request.NewTaskRequestDto
 import com.herc.test.hztasklist.service.UserService
 import com.herc.test.hztasklist.service.mapper.MapperToModel
 import com.herc.test.hztasklist.util.DateTimeUtil
+import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 import java.util.Locale
 
+@Component
 class NewTaskRequestDtoMapper(private val userService: UserService) :
     MapperToModel<Task, NewTaskRequestDto> {
 
     override fun toModel(dto: NewTaskRequestDto): Task {
-        val user: User? = dto.userId?.let { userId -> userService.getById(userId) }
-
         return Task(
-            user = user,
             title = dto.title,
             description = dto.description,
+            timeStamp = DateTimeUtil.toMillis(LocalDateTime.now()),
             expiredTime = DateTimeUtil.toMillis(dto.expiredTime),
             isComplete = false,
             taskPriority = EPriority.fromString(dto.taskPriority.lowercase(Locale.getDefault()))

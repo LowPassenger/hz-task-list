@@ -1,5 +1,6 @@
 package com.herc.test.hztasklist.advizor;
 
+import com.herc.test.hztasklist.advizor.exceptions.BadCredentialsException
 import com.herc.test.hztasklist.advizor.exceptions.ParameterNotFoundException
 import com.herc.test.hztasklist.advizor.exceptions.UserWithEmailExistException
 import com.herc.test.hztasklist.model.payload.dto.response.Error
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ControllerAdvice
-public class Advisor {
+class Advisor {
     @ExceptionHandler(BindException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
@@ -36,5 +37,9 @@ public class Advisor {
     fun handleParameterNotFoundException(e: ParameterNotFoundException): ResponseEntity<*> {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ErrorResponse(Error.INTERNAL_SERVER_ERROR, e.message))
+    }
+
+    fun handleBadCredentialsException(e: BadCredentialsException) : ResponseEntity<*> {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Error.INVALID_CREDENTIALS)
     }
 }

@@ -2,16 +2,16 @@ package com.herc.test.hztasklist.service
 
 import com.herc.test.hztasklist.advizor.exceptions.ParameterNotFoundException
 import com.herc.test.hztasklist.model.entity.RefreshToken
-import com.herc.test.hztasklist.model.entity.Task
 import com.herc.test.hztasklist.model.entity.User
+import com.herc.test.hztasklist.model.payload.dto.response.UserResponseDto
 import com.herc.test.hztasklist.repository.RefreshTokenRepository
-import com.herc.test.hztasklist.repository.RoleRepository
 import com.herc.test.hztasklist.repository.UserRepository
+import com.herc.test.hztasklist.service.mapper.impl.UserResponseDtoMapper
 import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.UUID
+import java.util.*
 
 @Service
 class UserService(val userRepository: UserRepository) {
@@ -21,35 +21,37 @@ class UserService(val userRepository: UserRepository) {
     private lateinit var refreshTokenRepository: RefreshTokenRepository
 
     @Autowired
-    lateinit var roleRepository: RoleRepository
+    lateinit var mapper: UserResponseDtoMapper
 
-    fun getById(id: Long) : User? {
+    fun getById(id: Long) : User {
         return userRepository.findById(id).orElseThrow {
             logger.error("User with id $id not found!")
             ParameterNotFoundException("User with id $id parameter not found")
         }
     }
 
-    fun existsByEmail(email: String): Boolean {
+    fun getAll() : List<UserResponseDto> {
+        val usersList = userRepository.findAll()
+        return usersList.map {user -> mapper.toDto(user)}
+    }
+
+    fun existsByEmail(email: String) : Boolean {
         return userRepository.existsByEmail(email)
     }
 
-    fun getByEmail(email: String): User? {
+    fun getByEmail(email: String) : User {
         return userRepository.findByEmail(email).orElseThrow {
             logger.error("User with email $email not found!")
             ParameterNotFoundException("User with id $email parameter not found")
         }
     }
 
-    fun delete(user: Task) {
-        userRepository.delete(user)
+    fun save(user: User) : User {
+       return userRepository.save(user)
     }
 
-    fun saveFcmToken(email: String, token: String) {
-        with(getByEmail(email)) {
-            fcmToken = token
-            userRepository.save(this)
-        }
+    fun delete(user: User) {
+        userRepository.delete(user)
     }
 
     @Transactional

@@ -7,11 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.util.Optional
 
 interface UserRepository : JpaRepository<User, Long> {
-    fun findByEmail(email: String): Optional<User?>
+    fun findByEmail(email: String): Optional<User>
 
-    override fun findById(id: Long): Optional<User?>
-
-    fun findByRefreshToken(token: RefreshToken): User?
+    override fun findById(id: Long): Optional<User>
 
     fun existsByEmail(email: String): Boolean
 }

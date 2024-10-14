@@ -1,6 +1,8 @@
 package com.herc.test.hztasklist.util
 
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Date
 
@@ -14,7 +16,14 @@ object DateTimeUtil {
         return Date.from(dateTime.atZone(java.time.ZoneId.systemDefault()).toInstant()).time
     }
 
-    fun toDate(localDateTime: LocalDateTime): Date {
-        return Date.from(localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant())
+    fun fromMillis(millis: Long): LocalDateTime {
+        return Instant.ofEpochMilli(millis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+    }
+
+    fun getDateTimeFormatter() : DateTimeFormatter {
+        return DateTimeFormatter.ofPattern(DATE_TIME_PATTERN)
+
     }
 }

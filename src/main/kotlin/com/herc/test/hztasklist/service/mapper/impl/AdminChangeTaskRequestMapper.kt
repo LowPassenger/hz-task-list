@@ -1,6 +1,5 @@
 package com.herc.test.hztasklist.service.mapper.impl
 
-import com.herc.test.hztasklist.advizor.exceptions.ParameterNotFoundException
 import com.herc.test.hztasklist.model.EPriority
 import com.herc.test.hztasklist.model.entity.Task
 import com.herc.test.hztasklist.model.entity.User
@@ -8,16 +7,16 @@ import com.herc.test.hztasklist.model.payload.dto.request.AdminChangeTaskRequest
 import com.herc.test.hztasklist.service.UserService
 import com.herc.test.hztasklist.service.mapper.MapperToModel
 import com.herc.test.hztasklist.util.DateTimeUtil
-import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
 import java.util.*
 
+@Component
 class AdminChangeTaskRequestMapper (private val userService: UserService) :
     MapperToModel<Task, AdminChangeTaskRequestDto> {
     override fun toModel(dto: AdminChangeTaskRequestDto): Task {
         val user: User? = dto.userId?.let { userId -> userService.getById(userId) }
 
         return Task(
-            id = dto.taskId,
             title = dto.title,
             description = dto.description,
             expiredTime = DateTimeUtil.toMillis(dto.expiredTime),

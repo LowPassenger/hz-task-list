@@ -8,10 +8,6 @@ import java.time.LocalDateTime
 
 @Schema(description = "Task Request DTO")
 data class NewTaskRequestDto(
-    @NotNull(message = "User id for Task is required")
-    @Schema(description = "User id", example = "1")
-    val userId: Long?,
-
     @NotNull(message = "Title for Task is required")
     @Length(max = 80, message = "Task title must contains less or equals than 80 characters")
     @Schema(description = "Title for your Task", example = "Implement class User")

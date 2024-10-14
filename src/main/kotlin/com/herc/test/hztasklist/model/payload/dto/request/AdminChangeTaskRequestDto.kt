@@ -7,11 +7,7 @@ import org.hibernate.validator.constraints.Length
 import java.time.LocalDateTime
 
 data class AdminChangeTaskRequestDto(
-    @NotNull(message = "Task id is required")
-    @Schema(description = "Task id", example = "1")
-    val taskId: Long?,
-
-    @Schema(description = "User id", example = "1")
+      @Schema(description = "User id", example = "1")
     val userId: Long?,
 
     @Length(max = 80, message = "Task title must contains less or equals than 80 characters")
