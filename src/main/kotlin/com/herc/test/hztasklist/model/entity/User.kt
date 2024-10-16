@@ -30,7 +30,7 @@ class User(
         joinColumns = [JoinColumn(name = "user_id")],
         inverseJoinColumns = [JoinColumn(name = "role_id")]
     )
-    var roles: Set<Role> = HashSet(),
+    var roles: MutableSet<Role> = mutableSetOf(),
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REMOVE])
     @JoinTable(
@@ -38,7 +38,7 @@ class User(
         joinColumns = [JoinColumn(name = "user_id")],
         inverseJoinColumns = [JoinColumn(name = "task_id")]
     )
-    var tasks: List<Task> = ArrayList(),
+    var tasks: MutableList<Task> = mutableListOf(),
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -11,7 +11,6 @@ class RegistrationResponseDtoMapper : MapperToDto<RegistrationResponseDto, User>
         return RegistrationResponseDto(
             id = entity.id,
             email = entity.email,
-            roles = entity.roles
         )
     }
 }

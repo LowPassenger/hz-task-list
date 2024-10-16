@@ -81,12 +81,13 @@ class AuthenticationService {
             password = encodedPassword,
             token = jwtUtils.generateTokenFromEmail(email),
             refreshToken = null,
-            roles = setOf(userRole),
-            tasks = emptyList()
+            roles = setOf(userRole) as MutableSet<Role>,
+            tasks = mutableListOf()
             )
         userToSave.refreshToken = userService.getRefreshToken(userToSave)
 
         val savedUser = userService.save(userToSave)
-        return mapper.toDto(savedUser)
+        val returnedUser = mapper.toDto(savedUser)
+        return returnedUser
     }
 }

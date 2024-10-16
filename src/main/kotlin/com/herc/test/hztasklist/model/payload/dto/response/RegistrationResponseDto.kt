@@ -4,6 +4,5 @@ import com.herc.test.hztasklist.model.entity.Role
 
 data class RegistrationResponseDto(
     val id: Long?,
-    val email: String,
-    val roles: Set<Role>
+    val email: String
 )

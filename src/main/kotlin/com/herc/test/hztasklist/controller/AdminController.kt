@@ -2,11 +2,12 @@ package com.herc.test.hztasklist.controller
 
 import com.herc.test.hztasklist.model.payload.dto.request.AdminChangeTaskRequestDto
 import com.herc.test.hztasklist.service.AdminService
-import com.herc.test.hztasklist.service.TaskService
+import com.herc.test.hztasklist.service.AuthenticationService
 import com.herc.test.hztasklist.service.UserService
 import com.herc.test.hztasklist.service.mapper.impl.AuthenticationResponseDtoMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,12 +16,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.*
 
 @Controller
 @RequestMapping(Resources.AdminApi.ROOT)
@@ -33,7 +29,7 @@ class AdminController {
     lateinit var userService: UserService
 
     @Autowired
-    lateinit var taskService: TaskService
+    lateinit var authService: AuthenticationService
 
     @Autowired
     lateinit var adminService: AdminService
@@ -53,9 +49,16 @@ class AdminController {
         return ResponseEntity.ok().body(adminService.getTasksListForUser(id))
     }
 
-    @GetMapping(value = [Resources.AdminApi.DELETE_USER])
+    @DeleteMapping(value = [Resources.AdminApi.DELETE_USER])
     @Operation(summary = "Delete User with chosen id")
-    fun deleteUser(@RequestParam("id") id: Long) : ResponseEntity<*> {
+    fun deleteUser(request: HttpServletRequest,
+                   @RequestParam("id") id: Long) : ResponseEntity<*> {
+        val user = authService.getUserFromHttpRequest(request)
+        if (id == user.id) {
+            return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT)
+                .body("Suicide is deprecated in this version of the application")
+        }
+
         if (adminService.deleteUser(id)) {
             logger.info("User with id $id was deleted")
             return ResponseEntity.ok().body("User with id $id successfully deleted")

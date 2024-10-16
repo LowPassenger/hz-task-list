@@ -13,7 +13,6 @@ class UserResponseDtoMapper : MapperToDto<UserResponseDto, User> {
         return UserResponseDto(
             id = entity.id,
             email = entity.email,
-            token = entity.token,
             roles = entity.roles,
             tasks = entity.tasks.map {task -> taskMapper.toDto(task)}
         )

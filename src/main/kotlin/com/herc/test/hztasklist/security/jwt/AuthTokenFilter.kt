@@ -29,13 +29,6 @@ class AuthTokenFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        val path = request.servletPath
-        if (path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs")
-            || path.startsWith("/favicon.ico")) {
-            filterChain.doFilter(request, response)
-            return
-        }
-
         try {
             val jwt = jwtUtils.getJwtFromHeader(request)
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {

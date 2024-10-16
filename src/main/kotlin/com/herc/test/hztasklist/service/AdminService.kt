@@ -18,7 +18,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import org.springframework.web.servlet.function.RequestPredicates.contentType
 
 @Service
 class AdminService {
@@ -54,9 +53,8 @@ class AdminService {
 
         val hasAdminRole = user.roles.any { role -> role == adminRole }
         if (hasAdminRole) return false
-        var userRoles = user.roles
-        userRoles.plus(adminRole)
-        user.roles = userRoles
+        var userRoles = user.roles.plus(adminRole)
+        user.roles = userRoles as MutableSet<Role>
         userService.save(user)
         return true
     }
@@ -72,9 +70,8 @@ class AdminService {
 
         val hasAdminRole = user.roles.any { role -> role == adminRole }
         if (!hasAdminRole) return false
-        var userRoles = user.roles
-        userRoles.minus(adminRole)
-        user.roles = userRoles
+        var userRoles = user.roles.minus(adminRole)
+        user.roles = userRoles as MutableSet<Role>
         userService.save(user)
         return true
     }
