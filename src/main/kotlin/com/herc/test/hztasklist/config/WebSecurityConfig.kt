@@ -44,7 +44,7 @@ class WebSecurityConfig(
         csrfHandler.setCsrfRequestAttributeName("_csrf")
 
         http
-            .csrf { csrf -> csrf.disable() }
+            .csrf {csrf -> csrf.disable()}
             .cors {cors -> cors.disable()}
             .sessionManagement { session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -67,6 +67,8 @@ class WebSecurityConfig(
                     .permitAll()
                     .requestMatchers(AntPathRequestMatcher("${Resources.AdminApi.ROOT}/**"))
                     .hasRole(ERole.ROLE_ADMIN.withoutPrefix())
+                    .requestMatchers(AntPathRequestMatcher("${Resources.TaskApi.ROOT}/**"))
+                    .hasAnyRole(ERole.ROLE_ADMIN.withoutPrefix(), ERole.ROLE_USER.withoutPrefix())
                     .anyRequest().authenticated()
             }
 

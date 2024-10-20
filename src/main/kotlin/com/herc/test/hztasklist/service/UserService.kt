@@ -1,17 +1,14 @@
 package com.herc.test.hztasklist.service
 
 import com.herc.test.hztasklist.advizor.exceptions.ParameterNotFoundException
-import com.herc.test.hztasklist.model.entity.RefreshToken
 import com.herc.test.hztasklist.model.entity.User
 import com.herc.test.hztasklist.model.payload.dto.response.UserResponseDto
 import com.herc.test.hztasklist.repository.RefreshTokenRepository
 import com.herc.test.hztasklist.repository.UserRepository
 import com.herc.test.hztasklist.service.mapper.impl.UserResponseDtoMapper
-import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import java.util.*
 
 @Service
 class UserService(val userRepository: UserRepository) {
@@ -39,11 +36,16 @@ class UserService(val userRepository: UserRepository) {
         return userRepository.existsByEmail(email)
     }
 
-    fun getByEmail(email: String) : User {
+    fun getUserByEmail(email: String) : User {
         return userRepository.findByEmail(email).orElseThrow {
             logger.error("User with email $email not found!")
             ParameterNotFoundException("User with id $email parameter not found")
         }
+    }
+
+    fun getUserByEmailWithRefreshToken(email: String) : User {
+        return userRepository.findByEmailWithRefreshToken(email)
+            .orElseThrow{throw ParameterNotFoundException("user with email $email")}
     }
 
     fun save(user: User) : User {
@@ -52,21 +54,5 @@ class UserService(val userRepository: UserRepository) {
 
     fun delete(user: User) {
         userRepository.delete(user)
-    }
-
-    @Transactional
-    fun getRefreshToken(user: User): RefreshToken {
-        return user.refreshToken ?: run {
-            var newRefreshToken = generateRefreshToken()
-            newRefreshToken = refreshTokenRepository.save(newRefreshToken)
-            user.refreshToken = newRefreshToken
-            userRepository.save(user)
-            newRefreshToken
-        }
-    }
-
-    private fun generateRefreshToken(): RefreshToken {
-        val token = UUID.randomUUID().toString()
-        return RefreshToken(token = token)
     }
 }

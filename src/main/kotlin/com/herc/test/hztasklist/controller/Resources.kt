@@ -5,6 +5,7 @@ object Resources {
         const val ROOT = "/api/auth"
         const val SIGN_IN = "/signin"
         const val SIGN_UP = "/signup"
+        const val REFRESH = "/refresh"
     }
 
     object TaskApi {

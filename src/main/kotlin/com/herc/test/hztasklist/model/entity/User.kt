@@ -18,8 +18,6 @@ class User(
     @field:NotBlank
     var password: String = "",
 
-    var token: String? = null,
-
     @OneToOne(cascade = [CascadeType.REMOVE], fetch = FetchType.LAZY)
     @JoinColumn(name = "refresh_token_id")
     var refreshToken: RefreshToken? = null,

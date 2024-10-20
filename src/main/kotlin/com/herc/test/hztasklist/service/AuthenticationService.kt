@@ -9,10 +9,8 @@ import com.herc.test.hztasklist.model.entity.User
 import com.herc.test.hztasklist.model.payload.dto.request.AuthenticationRequestDto
 import com.herc.test.hztasklist.model.payload.dto.response.AuthenticationResponseDto
 import com.herc.test.hztasklist.repository.RoleRepository
-import com.herc.test.hztasklist.repository.UserRepository
 import com.herc.test.hztasklist.security.jwt.JwtUtils
 import com.herc.test.hztasklist.service.mapper.impl.AuthenticationResponseDtoMapper
-import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -29,7 +27,7 @@ class AuthenticationService {
     lateinit var userService: UserService
 
     @Autowired
-    lateinit var userRepository: UserRepository
+    lateinit var refreshTokenService: RefreshTokenService
 
     @Autowired
     lateinit var roleRepository: RoleRepository
@@ -40,27 +38,26 @@ class AuthenticationService {
     @Autowired
     lateinit var mapper: AuthenticationResponseDtoMapper
 
-    fun getUserFromHttpRequest(request: HttpServletRequest) : User {
-        val jwtFromHeader = jwtUtils.getJwtFromHeader(request)
-        val emailFromJwtToken = jwtUtils.getUserEmailFromJwtToken(jwtFromHeader.toString())
-        return userService.getByEmail(emailFromJwtToken.toString())
-    }
-
     fun signIn(signinRequest: AuthenticationRequestDto) : AuthenticationResponseDto {
         val email = signinRequest.email
-        val user = userRepository.findByEmail(email).orElseThrow {
-            logger.error("User with email $email not found!")
-            throw BadCredentialsException()
-        }
+        val user = userService.getUserByEmailWithRefreshToken(email)
+
         if (!encoder.matches(signinRequest.password, user.password)) {
             logger.error("User with email $email not found!")
             throw BadCredentialsException()
         }
 
-        return mapper.toDto(user)
+        var refreshToken = user.refreshToken
+        if (refreshToken == null) refreshToken = refreshTokenService.getRefreshToken(user)
+        user.refreshToken = refreshToken
+        userService.save(user)
+        val response = mapper.toDto(user)
+        val jwtToken = jwtUtils.generateTokenFromEmail(email)
+        response.token = jwtToken
+        return response
     }
 
-    fun signUp(signupRequest: AuthenticationRequestDto) : AuthenticationResponseDto {
+    fun signUp(signupRequest: AuthenticationRequestDto) : Boolean {
         val email = signupRequest.email
         val userExist = userService.existsByEmail(email)
         if (userExist) {
@@ -79,15 +76,11 @@ class AuthenticationService {
             id = null,
             email = email,
             password = encodedPassword,
-            token = jwtUtils.generateTokenFromEmail(email),
             refreshToken = null,
             roles = setOf(userRole) as MutableSet<Role>,
             tasks = mutableListOf()
             )
-        userToSave.refreshToken = userService.getRefreshToken(userToSave)
-
-        val savedUser = userService.save(userToSave)
-        val returnedUser = mapper.toDto(savedUser)
-        return returnedUser
+        userService.save(userToSave)
+        return userService.existsByEmail(email)
     }
 }

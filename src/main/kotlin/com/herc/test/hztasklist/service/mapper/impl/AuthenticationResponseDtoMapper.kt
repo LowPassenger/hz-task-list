@@ -13,7 +13,8 @@ class AuthenticationResponseDtoMapper : MapperToDto<AuthenticationResponseDto, U
 
         return AuthenticationResponseDto(
             id = entity.id,
-            token = entity.token,
+            token = null,
+            refreshToken = entity.refreshToken!!.token!!,
             email = entity.email,
             role = roles
         )

@@ -15,12 +15,17 @@ class Task(
     @field:Size(max = 300)
     var description: String? = null,
 
+    @Column(name = "timestamp", nullable = false)
     var timeStamp: Long = 0,
+
+    @Column(name = "expired", nullable = false)
     var expiredTime: Long = 0,
+
+    @Column(name = "iscomplete", nullable = false)
     var isComplete: Boolean = false,
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 10)
+    @Column(name = "taskpriority", length = 10)
     var taskPriority: EPriority = EPriority.NORMAL,
 
     @OneToOne

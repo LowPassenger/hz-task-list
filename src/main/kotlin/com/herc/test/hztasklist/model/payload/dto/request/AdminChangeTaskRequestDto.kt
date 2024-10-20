@@ -7,20 +7,18 @@ import org.hibernate.validator.constraints.Length
 import java.time.LocalDateTime
 
 data class AdminChangeTaskRequestDto(
-      @Schema(description = "User id", example = "1")
+    @Schema(description = "User id", example = "1")
     val userId: Long?,
 
     @Length(max = 80, message = "Task title must contains less or equals than 80 characters")
     @Schema(description = "Title for your Task", example = "Implement class User")
     val title: String?,
 
-    @NotNull(message = "Task description is required")
     @Length(max = 300, message = "Task description must contains "
             + "less or equals than 300 characters")
     @Schema(description = "Description for your Task", example = "Add all required fields and functions")
     val description: String?,
 
-    @NotNull(message = "The expiration date and time for Task is required")
     @Schema(description = "Expiration date and time", example = "02/08/2024 17:34")
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     val expiredTime: LocalDateTime,

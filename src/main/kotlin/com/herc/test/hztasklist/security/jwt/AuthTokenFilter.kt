@@ -1,5 +1,6 @@
 package com.herc.test.hztasklist.security.jwt
 
+import com.herc.test.hztasklist.advizor.exceptions.ParameterNotFoundException
 import com.herc.test.hztasklist.security.services.UserDetailsServiceImpl
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
@@ -33,7 +34,7 @@ class AuthTokenFilter(
             val jwt = jwtUtils.getJwtFromHeader(request)
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 val email: String = jwtUtils.getUserEmailFromJwtToken(jwt)
-                    ?: throw RuntimeException("Can't retrieve name from auth token")
+                    ?: throw ParameterNotFoundException("name from auth token")
                 val userDetails: UserDetails = userDetailsService.loadUserByUsername(email)
                 val authentication = UsernamePasswordAuthenticationToken(
                     userDetails,

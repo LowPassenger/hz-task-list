@@ -1,13 +1,13 @@
 package com.herc.test.hztasklist.controller
 
 import com.herc.test.hztasklist.model.payload.dto.request.AdminChangeTaskRequestDto
+import com.herc.test.hztasklist.security.services.UserDetailsImpl
 import com.herc.test.hztasklist.service.AdminService
 import com.herc.test.hztasklist.service.AuthenticationService
 import com.herc.test.hztasklist.service.UserService
 import com.herc.test.hztasklist.service.mapper.impl.AuthenticationResponseDtoMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,6 +15,7 @@ import org.springframework.core.io.ByteArrayResource
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
 
@@ -27,9 +28,6 @@ class AdminController {
 
     @Autowired
     lateinit var userService: UserService
-
-    @Autowired
-    lateinit var authService: AuthenticationService
 
     @Autowired
     lateinit var adminService: AdminService
@@ -51,10 +49,9 @@ class AdminController {
 
     @DeleteMapping(value = [Resources.AdminApi.DELETE_USER])
     @Operation(summary = "Delete User with chosen id")
-    fun deleteUser(request: HttpServletRequest,
+    fun deleteUser(@AuthenticationPrincipal userDetails: UserDetailsImpl,
                    @RequestParam("id") id: Long) : ResponseEntity<*> {
-        val user = authService.getUserFromHttpRequest(request)
-        if (id == user.id) {
+        if (id == userDetails.id) {
             return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT)
                 .body("Suicide is deprecated in this version of the application")
         }

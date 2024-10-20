@@ -5,12 +5,9 @@ import com.herc.test.hztasklist.model.payload.dto.request.AdminChangeTaskRequest
 import com.herc.test.hztasklist.model.payload.dto.request.NewTaskRequestDto
 import com.herc.test.hztasklist.model.payload.dto.request.UserChangeTaskRequestDto
 import com.herc.test.hztasklist.model.payload.dto.response.TaskResponseDto
-import com.herc.test.hztasklist.service.AuthenticationService
+import com.herc.test.hztasklist.security.services.UserDetailsImpl
 import com.herc.test.hztasklist.service.TaskService
-import com.herc.test.hztasklist.service.UserService
 import com.herc.test.hztasklist.service.mapper.impl.AdminChangeTaskRequestMapper
-import com.herc.test.hztasklist.service.mapper.impl.NewTaskRequestDtoMapper
-import com.herc.test.hztasklist.service.mapper.impl.TaskToResponseDtoMapper
 import com.herc.test.hztasklist.service.mapper.impl.UserChangeTaskRequestDtoMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -21,14 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.*
 
 @Controller
 @RequestMapping(Resources.TaskApi.ROOT)
@@ -40,12 +32,6 @@ class TaskController {
     lateinit var taskService: TaskService
 
     @Autowired
-    lateinit var authService: AuthenticationService
-
-    @Autowired
-    lateinit var newRequestMapper: NewTaskRequestDtoMapper
-
-    @Autowired
     lateinit var userRequestMapper: UserChangeTaskRequestDtoMapper
 
     @Autowired
@@ -54,37 +40,36 @@ class TaskController {
     @PostMapping(value = [Resources.TaskApi.TASK_NEW])
     @Operation(summary = "Create new Task for User")
     @PreAuthorize("hasRole('ROLE_USER')")
-    fun createTask(request: HttpServletRequest,
-                   @Valid @RequestBody taskRequest: NewTaskRequestDto) : TaskResponseDto {
-        val user = authService.getUserFromHttpRequest(request)
-        return taskService.createNewTask(user, taskRequest)
+    fun createTask(@AuthenticationPrincipal userDetails: UserDetailsImpl,
+                   @Valid @RequestBody taskRequest: NewTaskRequestDto) : ResponseEntity<*> {
+        val response = taskService.createNewTask(userDetails.getUserFromDetails(), taskRequest)
+        return ResponseEntity.ok().body(response)
     }
 
     @GetMapping(value = [Resources.TaskApi.TASKS_LIST_FOR_EVERY_USER])
     @Operation(summary = "Returns list of all User Tasks")
     @PreAuthorize("hasRole('ROLE_USER')")
-    fun allUserTasksList(request: HttpServletRequest) : List<TaskResponseDto> {
-        val user = authService.getUserFromHttpRequest(request)
-        val userId = user.id!!
-        return taskService.getAllTasksByUserId(userId)
+    fun allUserTasksList(@AuthenticationPrincipal userDetails: UserDetailsImpl) :
+            ResponseEntity<*> {
+        val taskList = taskService.getAllTasksByUserId(userDetails.id!!)
+        return ResponseEntity.ok().body(taskList)
     }
 
     @GetMapping(value = [Resources.TaskApi.TASKS_LIST_WITH_STATUS])
     @Operation(summary = "Returns list of User Tasks with chosen status")
     @PreAuthorize("hasRole('ROLE_USER')")
-    fun taskListWithStatus(request: HttpServletRequest,
-                           @RequestParam("complete") complete: Boolean) : List<TaskResponseDto> {
-        val user = authService.getUserFromHttpRequest(request)
-        val userId = user.id!!
-        return taskService.getUserTasksListWithStatus(userId, complete)
+    fun taskListWithStatus(@AuthenticationPrincipal userDetails: UserDetailsImpl,
+                           @RequestParam("complete") complete: Boolean) : ResponseEntity<*> {
+        val taskList = taskService.getUserTasksListWithStatus(userDetails.id!!, complete)
+        return ResponseEntity.ok().body(taskList)
     }
 
     @DeleteMapping(value = [Resources.TaskApi.TASK_DELETE])
     @Operation(summary = "Delete Tasks with chosen id")
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
-    fun deleteTask(request: HttpServletRequest,
+    fun deleteTask(@AuthenticationPrincipal userDetails: UserDetailsImpl,
                    @RequestParam("id") id: Long) : ResponseEntity<*> {
-        val user = authService.getUserFromHttpRequest(request)
+        val user = userDetails.getUserFromDetails()
         val hasAdminRole = user.roles.any { role -> role.name == ERole.ROLE_ADMIN }
         var isTaskDeleted: Boolean = false
         if (hasAdminRole) {
@@ -136,11 +121,9 @@ class TaskController {
     @GetMapping(value = [Resources.TaskApi.TASK_COMPLETE])
     @Operation(summary = "Change Task status to 'complete'")
     @PreAuthorize("hasRole('ROLE_USER')")
-    fun changeTaskStatus(request: HttpServletRequest,
+    fun changeTaskStatus(@AuthenticationPrincipal userDetails: UserDetailsImpl,
                          @RequestParam("id") id: Long) : ResponseEntity<*> {
-        val user = authService.getUserFromHttpRequest(request)
-        val userId = user.id!!
-        val changedTask = taskService.changeTaskStatusToComplete(userId)
+        val changedTask = taskService.changeTaskStatusToComplete(userDetails.id!!)
         return ResponseEntity.ok().body(changedTask)
     }
 }
