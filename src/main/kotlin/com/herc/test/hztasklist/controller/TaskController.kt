@@ -1,5 +1,6 @@
 package com.herc.test.hztasklist.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.herc.test.hztasklist.model.ERole
 import com.herc.test.hztasklist.model.payload.dto.request.AdminChangeTaskRequestDto
 import com.herc.test.hztasklist.model.payload.dto.request.NewTaskRequestDto
@@ -71,7 +72,7 @@ class TaskController {
                    @RequestParam("id") id: Long) : ResponseEntity<*> {
         val user = userDetails.getUserFromDetails()
         val hasAdminRole = user.roles.any { role -> role.name == ERole.ROLE_ADMIN }
-        var isTaskDeleted: Boolean = false
+        var isTaskDeleted = false
         if (hasAdminRole) {
             isTaskDeleted = taskService.delete(id)
         } else
@@ -91,31 +92,34 @@ class TaskController {
     @PutMapping(value = [Resources.TaskApi.TASK_EDIT])
     @Operation(summary = "Update chosen Task")
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
-    fun update(request: HttpServletRequest,
-               @RequestParam("id") id: Long,
-               @Valid @RequestBody taskRequest: Any): ResponseEntity<*> {
-        val isTaskExist = taskService.existById(id)
-        if (!isTaskExist) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Task with id $id not found")
+    fun update(@AuthenticationPrincipal userDetails: UserDetailsImpl,
+               @Valid @RequestBody taskRequest: UserChangeTaskRequestDto): ResponseEntity<*> {
+        val user = userDetails.getUserFromDetails()
+        val taskId = taskRequest.taskId
+        val hasAdminRole = user.roles.any { role -> role.name == ERole.ROLE_ADMIN }
+        if (hasAdminRole) {
+            logger.warn("User with id ${user.id} has status ADMIN and must use "
+                    + "${Resources.AdminApi.EDIT_TASK} endpoint")
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("ADMIN must use specific section endpoints")
         }
 
-        val userRoles = request.isUserInRole("ROLE_ADMIN")
-        val taskForUpdate = when {
-            userRoles -> {
-                val adminRequest = taskRequest as AdminChangeTaskRequestDto
-                adminRequestMapper.toModel(adminRequest)
-            }
-            request.isUserInRole("ROLE_USER") -> {
-                val userRequest = taskRequest as UserChangeTaskRequestDto
-                userRequestMapper.toModel(userRequest)
-            }
-            else -> return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("You do not have permission to perform this action")
+        val hasUserRole = user.roles.any { role -> role.name == ERole.ROLE_USER }
+        if (!hasUserRole) {
+            logger.warn("User with id ${user.id} has no status USER and  "
+                    + "has no permission to change task $taskId")
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("ADMIN must use specific section endpoints")
         }
 
-        taskForUpdate.id = id
-        return ResponseEntity.ok(taskService.update(taskForUpdate))
+        if (!taskService.isTaskBelongToUser(user, taskId!!)) {
+            logger.warn("User with id ${user.id} has no task with $taskId  "
+                    + "in Task list, so task $taskId has no changes")
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("Task with $taskId do not belong to user with is ${user.id}")
+        }
+
+        return ResponseEntity.ok(taskService.update(taskRequest))
     }
 
     @GetMapping(value = [Resources.TaskApi.TASK_COMPLETE])
@@ -123,7 +127,10 @@ class TaskController {
     @PreAuthorize("hasRole('ROLE_USER')")
     fun changeTaskStatus(@AuthenticationPrincipal userDetails: UserDetailsImpl,
                          @RequestParam("id") id: Long) : ResponseEntity<*> {
-        val changedTask = taskService.changeTaskStatusToComplete(userDetails.id!!)
-        return ResponseEntity.ok().body(changedTask)
+        val changedTask = taskService.changeTaskStatusToComplete(userDetails.user, id)
+        return if (changedTask == true) {
+            ResponseEntity.ok().body("Task with id $id has complete status now")
+        } else ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body("There is a problem to change status for Task with id $id. See log file for details")
     }
 }

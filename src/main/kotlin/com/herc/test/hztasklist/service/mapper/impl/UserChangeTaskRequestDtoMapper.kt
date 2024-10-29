@@ -18,7 +18,7 @@ class UserChangeTaskRequestDtoMapper :
             description = dto.description,
             expiredTime = DateTimeUtil.toMillis(dto.expiredTime),
             isComplete = dto.isComplete,
-            taskPriority = EPriority.fromString(dto.taskPriority.lowercase(Locale.getDefault())),
+            taskPriority = EPriority.fromString(dto.taskPriority),
         )
     }
 }

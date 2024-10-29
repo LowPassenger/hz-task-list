@@ -3,7 +3,6 @@ package com.herc.test.hztasklist.controller
 import com.herc.test.hztasklist.model.payload.dto.request.AdminChangeTaskRequestDto
 import com.herc.test.hztasklist.security.services.UserDetailsImpl
 import com.herc.test.hztasklist.service.AdminService
-import com.herc.test.hztasklist.service.AuthenticationService
 import com.herc.test.hztasklist.service.UserService
 import com.herc.test.hztasklist.service.mapper.impl.AuthenticationResponseDtoMapper
 import io.swagger.v3.oas.annotations.Operation
@@ -79,7 +78,13 @@ class AdminController {
 
     @GetMapping(value = [Resources.AdminApi.REMOVE_FROM_USER_ROLE_ADMIN])
     @Operation(summary = "Remove Admin status from User with chosen id ")
-    fun removeUserStatusAdmin(@RequestParam("id") id: Long) : ResponseEntity<*> {
+    fun removeUserStatusAdmin(@AuthenticationPrincipal userDetails: UserDetailsImpl,
+                              @RequestParam("id") id: Long) : ResponseEntity<*> {
+        if (id == userDetails.id) {
+            return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT)
+                .body("Suicide is deprecated in this version of the application")
+        }
+
         return if (adminService.deleteUserAdminStatus(id))
             ResponseEntity.ok().body("User with id $id now has no Admin status")
         else

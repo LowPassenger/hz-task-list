@@ -3,7 +3,6 @@ package com.herc.test.hztasklist.service
 import com.herc.test.hztasklist.advizor.exceptions.ParameterNotFoundException
 import com.herc.test.hztasklist.model.entity.User
 import com.herc.test.hztasklist.model.payload.dto.response.UserResponseDto
-import com.herc.test.hztasklist.repository.RefreshTokenRepository
 import com.herc.test.hztasklist.repository.UserRepository
 import com.herc.test.hztasklist.service.mapper.impl.UserResponseDtoMapper
 import org.slf4j.LoggerFactory
@@ -13,9 +12,6 @@ import org.springframework.stereotype.Service
 @Service
 class UserService(val userRepository: UserRepository) {
     private val logger = LoggerFactory.getLogger(UserService::class.java)
-
-    @Autowired
-    private lateinit var refreshTokenRepository: RefreshTokenRepository
 
     @Autowired
     lateinit var mapper: UserResponseDtoMapper

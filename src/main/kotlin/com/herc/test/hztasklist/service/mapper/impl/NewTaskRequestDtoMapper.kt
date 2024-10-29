@@ -22,7 +22,7 @@ class NewTaskRequestDtoMapper(private val userService: UserService) :
             timeStamp = DateTimeUtil.toMillis(LocalDateTime.now()),
             expiredTime = DateTimeUtil.toMillis(dto.expiredTime),
             isComplete = false,
-            taskPriority = EPriority.fromString(dto.taskPriority.lowercase(Locale.getDefault()))
+            taskPriority = EPriority.fromString(dto.taskPriority)
         )
     }
 

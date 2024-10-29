@@ -18,7 +18,7 @@ class Task(
     @Column(name = "timestamp", nullable = false)
     var timeStamp: Long = 0,
 
-    @Column(name = "expired", nullable = false)
+    @Column(name = "expired_time", nullable = false)
     var expiredTime: Long = 0,
 
     @Column(name = "iscomplete", nullable = false)

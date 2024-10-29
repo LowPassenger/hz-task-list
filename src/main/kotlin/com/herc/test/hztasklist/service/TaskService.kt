@@ -1,9 +1,11 @@
 package com.herc.test.hztasklist.service
 
 import com.herc.test.hztasklist.advizor.exceptions.ParameterNotFoundException
+import com.herc.test.hztasklist.model.EPriority
 import com.herc.test.hztasklist.model.entity.Task
 import com.herc.test.hztasklist.model.entity.User
 import com.herc.test.hztasklist.model.payload.dto.request.NewTaskRequestDto
+import com.herc.test.hztasklist.model.payload.dto.request.UserChangeTaskRequestDto
 import com.herc.test.hztasklist.model.payload.dto.response.TaskResponseDto
 import com.herc.test.hztasklist.repository.TaskRepository
 import com.herc.test.hztasklist.service.mapper.impl.NewTaskRequestDtoMapper
@@ -13,7 +15,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-import java.util.Optional
+import java.util.*
 
 @Service
 class TaskService(val taskRepository : TaskRepository) {
@@ -25,13 +27,10 @@ class TaskService(val taskRepository : TaskRepository) {
     @Autowired
     lateinit var requestDtoMapper: NewTaskRequestDtoMapper
 
-    @Autowired
-    lateinit var userService: UserService
-
     fun getById(id: Long) : Task {
         return taskRepository.findById(id).orElseThrow {
             logger.error("Task with id $id not found!")
-            ParameterNotFoundException("Task with id $id parameter not found")
+            ParameterNotFoundException("Task with id $id parameter")
         }
     }
 
@@ -53,12 +52,7 @@ class TaskService(val taskRepository : TaskRepository) {
     fun delete(taskId: Long) : Boolean {
         val task = getById(taskId)
         taskRepository.delete(task)
-        val user = task.user
-        val userTasks = user!!.tasks
-        userTasks.minus(task)
-        user.tasks = userTasks
-        userService.save(user)
-        return taskRepository.existsById(taskId)
+        return !taskRepository.existsById(taskId)
     }
 
     fun delete(taskId: Long, user: User) : Boolean {
@@ -67,9 +61,19 @@ class TaskService(val taskRepository : TaskRepository) {
         else delete(taskId)
     }
 
-    fun update(task: Task) : TaskResponseDto {
-        val taskForUpdate = save(task)
-        return taskToResponseDtoMapper.toDto(taskForUpdate)
+    fun update(taskRequest: UserChangeTaskRequestDto) : TaskResponseDto {
+        val taskForUpdate = getById(taskRequest.taskId!!)
+
+        taskRequest.apply {
+            title?.let { taskForUpdate.title = it }
+            description?.let { taskForUpdate.description = it }
+            expiredTime.let { taskForUpdate.expiredTime = DateTimeUtil.toMillis(it) }
+            taskPriority.let { taskForUpdate.taskPriority = EPriority.fromString(it) }
+            isComplete.let { taskForUpdate.isComplete = it }
+        }
+
+        val savedTask = save(taskForUpdate)
+        return taskToResponseDtoMapper.toDto(savedTask)
     }
 
     fun getAllTasksByUserId(userId: Long) : List<TaskResponseDto> {
@@ -83,10 +87,19 @@ class TaskService(val taskRepository : TaskRepository) {
         return userTasksList.map {task -> taskToResponseDtoMapper.toDto(task)}
     }
 
-    fun changeTaskStatusToComplete(id: Long) : TaskResponseDto {
-        val taskToChange = getById(id)
+    fun changeTaskStatusToComplete(user: User, taskId: Long) : Boolean {
+        val taskToChange = getById(taskId)
+        if (taskToChange.user!!.id != user.id) {
+            logger.error("Task with id $taskId do not belong to user with email ${user.email}")
+            throw ParameterNotFoundException("Task with id $taskId in user's Task list")
+        }
+        if (taskToChange.isComplete == true) {
+            logger.warn("Task with id $taskId already has status isComplete = true")
+            return false
+        }
         taskToChange.isComplete = true
-        return taskToResponseDtoMapper.toDto(taskToChange)
+        val changedTask = save(taskToChange)
+        return (changedTask.isComplete == true)
     }
 
     fun completedTasksQuantity() : Int {
@@ -114,5 +127,10 @@ class TaskService(val taskRepository : TaskRepository) {
         }
 
         return Optional.ofNullable(lastTask)
+    }
+
+    fun isTaskBelongToUser(user: User, taskId: Long) : Boolean {
+        val userTasks = getAllTasksByUserId(user.id!!)
+        return userTasks.any{it.id == taskId}
     }
 }

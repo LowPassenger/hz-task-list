@@ -6,6 +6,7 @@ import com.herc.test.hztasklist.model.entity.User
 import com.herc.test.hztasklist.model.payload.dto.response.RefreshTokenResponseDto
 import com.herc.test.hztasklist.repository.RefreshTokenRepository
 import com.herc.test.hztasklist.security.jwt.JwtUtils
+import io.jsonwebtoken.ExpiredJwtException
 import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,24 +32,37 @@ class RefreshTokenService(val refreshTokenRepository: RefreshTokenRepository) {
     lateinit var jwtUtils: JwtUtils
 
     fun refreshMe(refreshRequest: RefreshTokenResponseDto) : RefreshTokenResponseDto {
-        val email = jwtUtils.getUserEmailFromJwtToken(refreshRequest.jwtToken)
-        if (email == null || userService.existsByEmail(email)) {
+        val email = try {
+            jwtUtils.getUserEmailFromJwtToken(refreshRequest.jwtToken)
+        } catch (exception: ExpiredJwtException) {
+            logger.warn("JWT token expired for refresh request: ${exception.message}")
+            exception.claims.subject
+        } catch (exception: Exception) {
+            logger.error("An error occurred during token parsing: ${exception.message}")
+            throw ParameterNotFoundException("Valid JWT token")
+        }
+        if (email == null || !userService.existsByEmail(email)) {
             logger.error("An error occurred during refresh token operation: email in "
                     + "JWT token not found or null or user with this email not found")
             throw ParameterNotFoundException("email in JWT token or user with this email")
         }
 
         val user = userService.getUserByEmailWithRefreshToken(email)
-        val userRefreshToken = user.refreshToken
+        var userRefreshToken = user.refreshToken
 
-        if (userRefreshToken == null || refreshRequest.refreshToken != userRefreshToken.token) {
+        if (userRefreshToken == null) {
+            userRefreshToken = getRefreshToken(user)
+            return RefreshTokenResponseDto(jwtUtils.generateTokenFromEmail(email),
+                userRefreshToken.token!!)
+        }
+
+        if (refreshRequest.refreshToken != userRefreshToken.token) {
             logger.error("An error occurred during refresh token operation: refreshToken for "
-                    + "user with email $email is null or not equal with refreshToken from DB")
-            throw ParameterNotFoundException("correct refresh token")
+                    + "user with email $email is not equal to refreshToken from DB")
+            throw ParameterNotFoundException("equal refresh token in db")
         }
 
         val refreshTokenTimeStamp = userRefreshToken.timeStamp
-        var refreshTokenUseCounter = userRefreshToken.counter
 
         if (Date().after(Date(refreshTokenTimeStamp + refreshExpirationMs))) {
             logger.error("An error occurred during refresh token operation: refreshToken for "
@@ -56,23 +70,34 @@ class RefreshTokenService(val refreshTokenRepository: RefreshTokenRepository) {
             throw ParameterNotFoundException("expired refresh token")
         }
 
-        if (refreshTokenUseCounter >= refreshTokenMaxCounter) {
+        var refreshTokenUseCounter = userRefreshToken.counter
+
+        if (refreshTokenUseCounter <= refreshTokenMaxCounter) {
             userRefreshToken.counter = ++refreshTokenUseCounter
             refreshTokenRepository.save(userRefreshToken)
-            return RefreshTokenResponseDto(jwtUtils.generateTokenFromEmail(email), userRefreshToken.token!!)
+            return RefreshTokenResponseDto(jwtUtils.generateTokenFromEmail(email),
+                userRefreshToken.token!!)
         }
 
-        return RefreshTokenResponseDto(jwtUtils.generateTokenFromEmail(email), getRefreshToken(user).token!!)
+        val generatedRefreshToken = generateRefreshToken()
+        userRefreshToken.token = generatedRefreshToken.token
+        userRefreshToken.counter = generatedRefreshToken.counter
+        userRefreshToken.timeStamp = generatedRefreshToken.timeStamp
+        val savedRefreshToken = refreshTokenRepository.save(userRefreshToken)
+
+        return RefreshTokenResponseDto(jwtUtils.generateTokenFromEmail(email), savedRefreshToken.token!!)
     }
 
     fun getRefreshToken(user: User): RefreshToken {
-        return user.refreshToken ?: run {
+        var refreshToken = user.refreshToken
+        if (user.refreshToken == null) {
             var newRefreshToken = generateRefreshToken()
             newRefreshToken = refreshTokenRepository.save(newRefreshToken)
             user.refreshToken = newRefreshToken
             userService.save(user)
-            newRefreshToken
+            refreshToken = newRefreshToken
         }
+        return refreshToken!!
     }
 
     private fun generateRefreshToken(): RefreshToken {

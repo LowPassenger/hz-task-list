@@ -114,18 +114,17 @@ class AdminService {
     fun usersStatistic() : String {
         val usersDtoList = userService.getAll()
         val response = StringBuilder()
-        val current = StringBuilder()
 
-        usersDtoList.forEach { user -> {
-            current.setLength(0)
+        usersDtoList.forEach { user ->
+            val current = StringBuilder()
             current.append("User with id ")
                 .append(user.id)
                 .append(" has ")
-                .append(user.tasks.count())
+                .append(taskService.getAllTasksByUserId(user.id!!).count())
                 .append(" own tasks")
                 .append(System.lineSeparator())
             response.append(current)
-        } }
+        }
 
         return response.toString()
     }
@@ -154,8 +153,9 @@ class AdminService {
             }
 
             csvContent.append("${user.id},${user.email},")
-                .append("$allTasksQuantity,$completedTasksQuantity,$uncompletedTasksQuantity")
+                .append("$allTasksQuantity,$completedTasksQuantity,$uncompletedTasksQuantity,")
                 .append("$lastUserTaskId,$lastUserTaskDate")
+                .append(System.lineSeparator())
         }
 
         val resource = ByteArrayResource(csvContent.toString().toByteArray())

@@ -41,7 +41,7 @@ CREATE TABLE tasks (
                        title VARCHAR(80) NOT NULL,
                        description VARCHAR(300),
                        timestamp BIGINT NOT NULL,
-                       expired BIGINT NOT NULL,
+                       expired_time BIGINT NOT NULL,
                        iscomplete BOOLEAN NOT NULL,
                        taskpriority VARCHAR(10) NOT NULL,
                        user_id BIGINT,
@@ -59,4 +59,4 @@ CREATE TABLE user_tasks (
                             CONSTRAINT fk_user_tasks_task FOREIGN KEY (task_id) REFERENCES tasks(id)
 );
 
-CREATE INDEX idx_task_expired ON tasks(expired);
+CREATE INDEX idx_task_expired ON tasks(expired_time);

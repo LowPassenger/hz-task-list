@@ -8,6 +8,7 @@ import java.util.Date
 
 object DateTimeUtil {
     const val DATE_TIME_PATTERN: String = "dd/MM/yyyy HH:mm"
+    const val DATE_TIME_PATTERN_FOR_PARSING: String = "yyyy-MM-dd'T'HH:mm"
 
     fun toMillis(localDateTime: LocalDateTime): Long {
         val formatter = DateTimeFormatter.ofPattern(DATE_TIME_PATTERN)
@@ -23,7 +24,7 @@ object DateTimeUtil {
     }
 
     fun getDateTimeFormatter() : DateTimeFormatter {
-        return DateTimeFormatter.ofPattern(DATE_TIME_PATTERN)
+        return DateTimeFormatter.ofPattern(DATE_TIME_PATTERN_FOR_PARSING)
 
     }
 }

@@ -1,12 +1,13 @@
 package com.herc.test.hztasklist.model.payload.dto.request
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotNull
 import org.hibernate.validator.constraints.Length
 import java.time.LocalDateTime
 
-data class UserChangeTaskRequestDto(
+data class UserChangeTaskRequestDto @JsonCreator constructor(
     @NotNull(message = "Task id is required")
     @Schema(description = "Task id", example = "1")
     val taskId: Long?,
@@ -21,9 +22,10 @@ data class UserChangeTaskRequestDto(
     val description: String?,
 
     @Schema(description = "Expiration date and time", example = "02/08/2024 17:34")
-    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
     val expiredTime: LocalDateTime,
 
+    @NotNull(message = "Task priority is required")
     @Schema(description = "There are some cases available for Task priority: "
             + "Low, Normal, High, Extra", example = "Normal")
     val taskPriority: String,
