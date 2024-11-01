@@ -128,7 +128,7 @@ class TaskController {
     fun changeTaskStatus(@AuthenticationPrincipal userDetails: UserDetailsImpl,
                          @RequestParam("id") id: Long) : ResponseEntity<*> {
         val changedTask = taskService.changeTaskStatusToComplete(userDetails.user, id)
-        return if (changedTask == true) {
+        return if (changedTask) {
             ResponseEntity.ok().body("Task with id $id has complete status now")
         } else ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body("There is a problem to change status for Task with id $id. See log file for details")

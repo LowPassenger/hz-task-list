@@ -39,7 +39,11 @@ class Advisor {
             .body(ErrorResponse(Error.INTERNAL_SERVER_ERROR, e.message))
     }
 
+    @ExceptionHandler(BadCredentialsException::class)
+    @ResponseBody
     fun handleBadCredentialsException(e: BadCredentialsException) : ResponseEntity<*> {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Error.INVALID_CREDENTIALS)
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(ErrorResponse(Error.INVALID_CREDENTIALS,
+                "Access denied. Wrong username or password"))
     }
 }
